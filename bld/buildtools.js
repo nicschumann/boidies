@@ -18,6 +18,7 @@ const buildjs = async path => {
     loader: {
       '.vs': 'text',
       '.fs': 'text',
+      '.obj': 'text',
       '.eot': 'file',
       '.woff': 'file',
       '.ttf': 'file'
