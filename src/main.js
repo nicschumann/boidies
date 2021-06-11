@@ -8,7 +8,7 @@ let regl = require('regl')({
 let {vec2, vec3, mat3, mat4} = require('gl-matrix');
 
 
-const BOIDS = [8, 8]; // = 64 boids
+const BOIDS = [4, 4]; // = 16 boids
 
 
 const SIM_RESOLUTION = [1024, 1024];
@@ -42,7 +42,9 @@ function create_boid_geometry ()
 	for (let i = 0; i < BOIDS[0]; i++) {
 		for (let j = 0; j < BOIDS[1]; j++) {
 
-			let c = i * BOIDS[0] + BOIDS[1];
+			let c = (i * BOIDS[0] + j) * 4;
+
+			console.log(c);
 
 			let u = i / BOIDS[0];
 			let v = j / BOIDS[1];
@@ -153,8 +155,10 @@ function get_simulation_indices()
 // `;
 
 let boids = create_boid_geometry();
-let boid_positions = create_random_nearest_buffer(regl, BOIDS[0]);
-let boid_velocities = create_random_nearest_buffer(regl, BOIDS[0]);
+
+let boid_positions = new DoubleFramebuffer(regl, BOIDS[0]);
+let boid_velocities = new DoubleFramebuffer(regl, BOIDS[0]);
+
 let draw_simulated_boids = regl({
 	framebuffer: null,
 	vert: `
@@ -301,8 +305,8 @@ const do_frame = () =>
 	let M_target_mvp = get_m_mvp(M_target, V, P);
 
 	draw_simulated_boids({
-		u_positions: boid_positions,
-		u_velocities: boid_velocities,
+		u_positions: boid_positions.front,
+		u_velocities: boid_velocities.front,
 
 
 		u_resolution: [window.innerWidth, window.innerHeight],

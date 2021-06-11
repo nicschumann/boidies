@@ -1,10 +1,10 @@
-export function create_linear_buffer(regl, resolution)
+export function create_nearest_buffer(regl, resolution)
 {
 	let color = regl.texture({
 		data: new Float32Array(resolution * resolution * 4),
 		shape: [resolution, resolution, 4],
-		mag: 'linear',
-		min: 'linear',
+		mag: 'nearest',
+		min: 'nearest',
 		wrapS: 'repeat',
 		wrapT: 'repeat',
 		type: 'float'
@@ -50,8 +50,8 @@ export function create_random_nearest_buffer(regl, resolution, min=-0.75, max=0.
 export class DoubleFramebuffer {
   constructor(regl, resolution) {
 		this.tmp = null;
-		this.front = create_buffer(regl, resolution);
-		this.back = create_buffer(regl, resolution);
+		this.front = create_random_nearest_buffer(regl, resolution);
+		this.back = create_nearest_buffer(regl, resolution);
   }
 
   swap() {
