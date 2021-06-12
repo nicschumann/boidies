@@ -18,7 +18,7 @@ export function create_nearest_buffer(regl, resolution)
 }
 
 
-export function create_random_nearest_buffer(regl, resolution, min=-0.75, max=0.75)
+export function create_random_nearest_buffer(regl, resolution, min=-0.05, max=0.05)
 {
 	let data = new Float32Array(resolution * resolution * 4);
 
@@ -27,7 +27,18 @@ export function create_random_nearest_buffer(regl, resolution, min=-0.75, max=0.
 		data[i + 0] = Math.random() * (max - min) + min;
 		data[i + 1] = Math.random() * (max - min) + min;
 		data[i + 2] = Math.random() * (max - min) + min;
-		data[i + 3] = 0;
+
+		let norm = Math.sqrt(
+			data[i + 0] * data[i + 0] +
+			data[i + 1] * data[i + 1] +
+			data[i + 2] * data[i + 2]
+		);
+
+		data[i + 0] /= (norm * 2)
+		data[i + 1] /= (norm * 2)
+		data[i + 2] /= (norm * 2)
+
+		data[i + 3] = 1.0;
 	}
 
 	let color = regl.texture({
