@@ -3,8 +3,11 @@ precision mediump float;
 attribute vec3 a_offset;
 attribute vec2 a_index;
 attribute vec3 a_color;
+attribute vec3 a_normal;
 
+varying vec3 v_position;
 varying vec3 v_color;
+varying vec3 v_normal;
 
 uniform sampler2D u_positions;
 uniform sampler2D u_velocities;
@@ -18,6 +21,10 @@ uniform vec2 u_resolution;
 
 mat3 R(vec3 vel)
 {
+  // works okay, but boids will occasionally
+  // flip around when the camera up-vector
+  // has a degenerate cross-product... rendering issue.
+
   vec3 up_w = vec3(0, 0, 1);
   vec3 front_b = normalize(vel);
   vec3 right_b = normalize(cross(front_b, up_w));
@@ -30,11 +37,16 @@ mat3 R(vec3 vel)
 
 void main (void)
 {
-  v_color = a_color;
-
   vec3 vel = texture2D(u_velocities, a_index).xyz;
-  vec3 a_rotated_offset = R(vel) * a_offset;
-  vec3 position = texture2D(u_positions, a_index).xyz;
+  mat3 rotation = R(vel);
 
-  gl_Position = u_mvp * vec4(position + a_rotated_offset, 1.0);
+  vec3 a_rotated_offset = rotation * a_offset;
+  vec3 boid_position = texture2D(u_positions, a_index).xyz;
+  vec3 final_position = boid_position + a_rotated_offset;
+
+  v_position = final_position;
+  v_color = a_color;
+  v_normal = rotation * a_normal;
+
+  gl_Position = u_mvp * vec4(final_position, 1.0);
 }

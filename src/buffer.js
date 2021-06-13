@@ -5,8 +5,8 @@ export function create_nearest_buffer(regl, resolution)
 		shape: [resolution, resolution, 4],
 		mag: 'nearest',
 		min: 'nearest',
-		wrapS: 'repeat',
-		wrapT: 'repeat',
+		wrapS: 'clamp',
+		wrapT: 'clamp',
 		type: 'float'
 	});
 
@@ -46,8 +46,8 @@ export function create_random_nearest_buffer(regl, resolution, min=-0.05, max=0.
 		shape: [resolution, resolution, 4],
 		mag: 'nearest',
 		min: 'nearest',
-		wrapS: 'repeat',
-		wrapT: 'repeat',
+		wrapS: 'clamp',
+		wrapT: 'clamp',
 		type: 'float'
 	});
 

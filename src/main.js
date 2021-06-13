@@ -8,22 +8,173 @@ let regl = require('regl')({
 let {vec2, vec3, mat3, mat4} = require('gl-matrix');
 
 
-const BOIDS = [2, 2]; // = 16 boids
-
-
-const SIM_RESOLUTION = [1024, 1024];
-const FIELD_RESOLUTION = [1024, 1024];
+let BOID_COUNT = 73;
+let BOIDS = [BOID_COUNT, BOID_COUNT];
 
 
 
-function create_boid_geometry ()
+function create_normal_colored_boid_geometry ()
+{
+	let positions = [];
+	let indices = [];
+	let colors = [];
+	let normals = [];
+
+	let elements = [];
+
+	if (BOIDS[0] >= 74){
+		console.log(`Warning: attempting to create ${BOIDS[0]}^2 = ${BOIDS[0] * BOIDS[1]} boids.`);
+		console.log(`Warning: max vertices in WebGL is 65k. With normal representation, each boid required 12 vertices.`);
+		console.log(`Warning: Therefore the maximum boid count is 73^2 = 5329 boids.`);
+		console.log(`Warning: Clamping your desired boid count to 73^2.`);
+		BOIDS = [73, 73];
+	}
+
+	// set boid size depending on
+	// how many boids we have.
+	let unit = 0.0075;
+
+	if (BOIDS[0] <= 64) {
+		unit = 0.006;
+	}
+
+
+	let boid_face_colors = [
+		[1.0, 0.0, 0.0],
+		[0.0, 1.0, 0.0],
+		[0.0, 0.0, 1.0],
+		[1.0, 1.0, 0.0]
+	];
+
+	let boid_verts = [
+		[ unit, 0.0, 0.0],
+		[-unit, 0.0, 0.0],
+		[0.00, 1.5 * unit, 0.0],
+		[0.00, unit, 5 * unit]
+	];
+
+	let boid_normals = [
+		vec3.normalize([], vec3.cross([], vec3.sub([], boid_verts[0], boid_verts[1]), vec3.sub([], boid_verts[0], boid_verts[2]))),
+		vec3.normalize([], vec3.cross([], vec3.sub([], boid_verts[1], boid_verts[2]), vec3.sub([], boid_verts[1], boid_verts[3]))),
+		vec3.normalize([], vec3.cross([], vec3.sub([], boid_verts[0], boid_verts[2]), vec3.sub([], boid_verts[0], boid_verts[3]))),
+		vec3.normalize([], vec3.cross([], vec3.sub([], boid_verts[0], boid_verts[1]), vec3.sub([], boid_verts[0], boid_verts[3])))
+	]
+
+
+	for (let i = 0; i < BOIDS[0]; i++) {
+		for (let j = 0; j < BOIDS[1]; j++) {
+
+			let c = (i * BOIDS[0] + j) * 12;
+
+			let u = i / BOIDS[0];
+			let v = j / BOIDS[1];
+
+			//back triangle:
+			positions.push(boid_verts[0])
+			positions.push(boid_verts[1])
+			positions.push(boid_verts[2])
+
+			colors.push(boid_face_colors[0]);
+			colors.push(boid_face_colors[0]);
+			colors.push(boid_face_colors[0]);
+
+			indices.push([u,v]);
+			indices.push([u,v]);
+			indices.push([u,v]);
+
+			normals.push(boid_normals[0]);
+			normals.push(boid_normals[0]);
+			normals.push(boid_normals[0]);
+
+			elements.push([c + 0, c + 1, c + 2]);
+
+
+			// left triangle:
+			positions.push(boid_verts[1])
+			positions.push(boid_verts[3])
+			positions.push(boid_verts[2])
+
+			colors.push(boid_face_colors[1]);
+			colors.push(boid_face_colors[1]);
+			colors.push(boid_face_colors[1]);
+
+			indices.push([u,v]);
+			indices.push([u,v]);
+			indices.push([u,v]);
+
+			normals.push(boid_normals[1]);
+			normals.push(boid_normals[1]);
+			normals.push(boid_normals[1]);
+
+			elements.push([c + 3, c + 4, c + 5]);
+
+			// right triangle:
+			positions.push(boid_verts[0])
+			positions.push(boid_verts[2])
+			positions.push(boid_verts[3])
+
+			colors.push(boid_face_colors[2]);
+			colors.push(boid_face_colors[2]);
+			colors.push(boid_face_colors[2]);
+
+			indices.push([u,v]);
+			indices.push([u,v]);
+			indices.push([u,v]);
+
+			normals.push(boid_normals[2]);
+			normals.push(boid_normals[2]);
+			normals.push(boid_normals[2]);
+
+			elements.push([c + 6, c + 7, c + 8]);
+
+			// bottom triangle:
+			positions.push(boid_verts[0])
+			positions.push(boid_verts[3])
+			positions.push(boid_verts[1])
+
+			colors.push(boid_face_colors[3]);
+			colors.push(boid_face_colors[3]);
+			colors.push(boid_face_colors[3]);
+
+			indices.push([u,v]);
+			indices.push([u,v]);
+			indices.push([u,v]);
+
+			normals.push(boid_normals[3]);
+			normals.push(boid_normals[3]);
+			normals.push(boid_normals[3]);
+
+			elements.push([c + 9, c + 10, c + 11]);
+		}
+	}
+
+	return {
+		positions,
+		colors,
+		indices,
+		elements,
+		normals
+	};
+}
+
+// console.log(create_normal_colored_boid_geometry());
+
+
+function create_vert_colored_boid_geometry ()
 {
 	let positions = [];
 	let indices = [];
 	let elements = [];
 	let colors = [];
 
-	let unit = 0.015;
+	// set boid size depending on
+	// how many boids we have.
+	let unit = 0.0025;
+
+	if (BOIDS[0] <= 64) {
+		unit = 0.006;
+	}
+
 
 	let boid_face_colors = [
 		[1.0, 0.0, 0.0],
@@ -43,8 +194,6 @@ function create_boid_geometry ()
 		for (let j = 0; j < BOIDS[1]; j++) {
 
 			let c = (i * BOIDS[0] + j) * 4;
-
-			console.log(c);
 
 			let u = i / BOIDS[0];
 			let v = j / BOIDS[1];
@@ -68,7 +217,6 @@ function create_boid_geometry ()
 			elements.push([c + 0, c + 2, c + 3])
 			elements.push([c + 2, c + 1, c + 3])
 			elements.push([c + 0, c + 1, c + 3])
-
 		}
 	}
 
@@ -110,27 +258,6 @@ let get_m_mvp = (M, V, P) => {
 };
 
 
-
-function get_simulation_indices()
-{
-	let dx = 1.0 / SIM_RESOLUTION[0];
-	let dy = 1.0 / SIM_RESOLUTION[1];
-	let dx_2 = dx / 2.0;
-	let dy_2 = dy / 2.0;
-
-	let attributes = [];
-
-	for ( var y = 0; y < SIM_RESOLUTION[1]; y++)
-	{
-		for (var x = 0; x < SIM_RESOLUTION[0]; x++)
-		{
-			attributes.push([x * dx + dx_2, y * dy + dy_2]);
-		}
-	}
-
-	return attributes;
-}
-
 // const vert_shader = `
 // 	precision mediump float;
 //
@@ -154,7 +281,9 @@ function get_simulation_indices()
 // 	}
 // `;
 
-let boids = create_boid_geometry();
+let boids = create_normal_colored_boid_geometry();
+
+console.log(`created ${boids.positions.length} vertices.`)
 
 let boid_positions = new DoubleFramebuffer(regl, BOIDS[0]);
 let boid_velocities = new DoubleFramebuffer(regl, BOIDS[0]);
@@ -172,174 +301,11 @@ let render_debug_buffer = regl({
 	}
 });
 
-// let step_boid_velocity = regl({
-// 	framebuffer: regl.prop('target'),
-// 	vert: `
-// 		precision mediump float;
-//
-// 		attribute vec2 a_position;
-//
-// 		varying vec2 v_uv;
-//
-// 		void main (void)
-// 		{
-// 			v_uv = a_position * 0.5 + 0.5;
-// 			gl_Position = vec4(a_position, 0.0, 1.0);
-// 		}
-// 	`,
-// 	frag: `
-// 		precision mediump float;
-//
-// 		varying vec2 v_uv;
-//
-// 		uniform sampler2D u_positions;
-// 		uniform sampler2D u_velocities;
-// 		uniform float u_dt;
-//
-// 		const float min_speed = 0.1;
-// 		const float max_speed = 0.2;
-//
-// 		const float cohesion_radius_sq = 0.25;
-// 		const float alignment_radius_sq = 0.25;
-// 		const float separation_radius_sq = 0.125;
-//
-// 		const float cohesion_coefficient = 0.01;
-// 		const float alignment_coefficient = 0.125;
-//
-// 		const vec2 boid_counts = vec2(${BOIDS[0]}, ${BOIDS[1]});
-// 		const vec2 bounds_x = vec2(-75.0, 75.0);
-// 		const vec2 bounds_y = vec2(-75.0, 75.0);
-// 		const vec2 bounds_z = vec2(-75.0, 75.0);
-//
-// 		vec3 clamp_velocity(vec3 vel)
-// 		{
-// 			vec3 new_vel = normalize(vel) * min(max_speed, max(length(vel), min_speed));
-// 			return new_vel;
-// 		}
-//
-// 		vec3 compute_adjustment(vec3 curr_pos, vec3 curr_vel)
-// 		{
-// 			float u_count_inv = 1.0 / boid_counts.x;
-// 			float v_count_inv = 1.0 / boid_counts.y;
-// 			float du_h = u_count_inv / 2.0;
-// 			float dv_h = v_count_inv / 2.0;
-//
-// 			vec4 cohesion_position_avg = vec4(0.0); // w coordinate stores the count;
-// 			vec4 alignment_velocity_avg = vec4(0.0); // w coordinate stores the count;
-// 			vec3 separation_velocity_avg = vec3(0.0);
-//
-// 			for (float i = 0.0; i < boid_counts.x; i++) {
-// 				for (float j = 0.0; j < boid_counts.y; j++) {
-//
-// 					vec2 uv = vec2(
-// 						i * u_count_inv,
-// 						j * v_count_inv
-// 					);
-//
-// 					vec3 n_pos = texture2D(u_positions, uv).xyz;
-// 					vec3 d_pos = n_pos - curr_pos;
-// 					float dist_sq = dot(d_pos, d_pos);
-//
-// 					float cohesion_in_range = max(0.0, sign(cohesion_radius_sq - dist_sq));
-// 					cohesion_position_avg.xyz += cohesion_in_range * n_pos;
-// 					cohesion_position_avg.w += cohesion_in_range;
-//
-// 					float alignment_in_range = max(0.0, sign(alignment_radius_sq - dist_sq));
-// 					alignment_velocity_avg.xyz += alignment_in_range * texture2D(u_velocities, uv).xyz;
-// 					alignment_velocity_avg.w += alignment_in_range;
-//
-// 					float separation_in_range = max(0.0, sign(separation_radius_sq - dist_sq));
-// 					separation_velocity_avg -= separation_in_range * d_pos;
-// 				}
-// 			}
-//
-// 			vec3 adjustment = vec3(0.0); // clamp_velocity(separation_velocity_avg);
-// 			vec3 cohesion = cohesion_position_avg.xyz;
-// 			vec3 alignment = alignment_velocity_avg.xyz;
-//
-// 			if (cohesion_position_avg.w > 0.0)
-// 			{
-// 				cohesion /= cohesion_position_avg.w;
-// 				adjustment += clamp_velocity((cohesion - curr_pos) * cohesion_coefficient);
-// 			}
-//
-// 			if (alignment_velocity_avg.w > 0.0)
-// 			{
-// 				alignment /= alignment_velocity_avg.w;
-// 				adjustment = clamp_velocity((alignment - curr_vel) * alignment_coefficient);
-// 			}
-//
-// 			return adjustment;
-// 		}
-//
-// 		vec3 bounds(vec3 pos)
-// 		{
-// 			float bounds_multiplier = 0.1;
-// 			vec3 v = vec3(0.0);
-//
-// 			if (pos.x < bounds_x.x) {
-// 				v.x = -bounds_multiplier;
-// 			}
-// 			else if (pos.x > bounds_x.y) {
-// 				v.x = bounds_multiplier;
-// 			}
-//
-// 			else if (pos.y < bounds_y.x) {
-// 				v.y = -bounds_multiplier;
-// 			}
-// 			else if (pos.y > bounds_y.y) {
-// 				v.y = bounds_multiplier;
-// 			}
-//
-// 			else if (pos.z < bounds_z.x) {
-// 				v.z = -bounds_multiplier;
-// 			}
-// 			else if (pos.z > bounds_z.y) {
-// 				v.z = bounds_multiplier;
-// 			}
-//
-// 			return v;
-// 		}
-//
-// 		void main (void)
-// 		{
-// 			vec3 old_vel = texture2D(u_velocities, v_uv).xyz;
-// 			vec3 curr_pos = texture2D(u_positions, v_uv).xyz;
-// 			vec3 curr_vel = texture2D(u_velocities, v_uv).xyz;
-//
-// 			vec3 adjustment = compute_adjustment(curr_pos, curr_vel);
-// 			vec3 next_vel = old_vel + 0.2 * adjustment; // 0.2?
-//
-// 			// vec3 b = bounds(curr_pos + next_vel);
-// 			// next_vel += b;
-//
-// 			next_vel = normalize(next_vel) * 0.01;
-//
-// 			next_vel = clamp_velocity(next_vel);
-// 			gl_FragColor = vec4(next_vel, 1.0);
-// 		}
-// 	`,
-// 	attributes: {
-// 		a_position: [-1, -1, -1, 1, 1, 1, 1, -1]
-// 	},
-// 	elements: [0, 1, 2, 0, 2, 3],
-// 	uniforms: {
-// 		u_positions: regl.prop('u_positions'),
-// 		u_velocities: regl.prop('u_velocities'),
-// 		u_boid_counts: regl.prop('u_boid_counts'),
-// 		u_dt: regl.prop('u_dt')
-// 	}
-// });
-
 let step_boid_velocity = regl({
 	framebuffer: regl.prop('target'),
 	vert: require('./pass-through.vs'),
 
-
-	// frag: require('./step-boid-velocity.fs'),
-	frag: require('./step-boid-orbit-center.fs'),
-
-
+	frag: require('./step-boid-velocity.fs'),
 
 	attributes: {
 		a_position: [-1, -1, -1, 1, 1, 1, 1, -1]
@@ -371,11 +337,12 @@ let step_boid_position = regl({
 let draw_simulated_boids = regl({
 	framebuffer: null,
 	vert: require('./render-boid.vs'),
-	frag: require('./render-boid.fs'),
+	frag: require('./render-boid-with-lighting.fs'),
 	attributes: {
 		a_offset: boids.positions,
 		a_index: boids.indices,
-		a_color: boids.colors
+		a_color: boids.colors,
+		a_normal: boids.normals
 	},
 	elements: boids.elements,
 	uniforms: {
@@ -402,7 +369,7 @@ let state = {
 	},
 	camera: {
 		T: {
-			pos: vec3.fromValues(0.0, -6.0, -6.0),
+			pos: vec3.fromValues(0.0, -4.0, -4.0),
 			tar: vec3.fromValues(0.0, 0.0, 0.0),
 			up: vec3.fromValues(0.0, 0.0, -1.0)
 		}
@@ -424,7 +391,7 @@ const do_frame = (info) =>
 	let P = get_m_proj(state.camera);
 	let M_target = get_m_model(state.quad)
 	let M_target_mvp = get_m_mvp(M_target, V, P);
-
+	//
 	draw_simulated_boids({
 		u_positions: boid_positions.front,
 		u_velocities: boid_velocities.front,
@@ -441,7 +408,7 @@ const do_frame = (info) =>
 		u_color: [1, 0, 0, 1]
 	});
 
-	const DT_MULTIPLIER = 0.0005;
+	const DT_MULTIPLIER = 0.001;
 
 	step_boid_velocity({
 		target: boid_velocities.back,
@@ -462,7 +429,7 @@ const do_frame = (info) =>
 	boid_positions.swap();
 
 	// render_debug_buffer({
-	// 	u_texture: boid_positions.front,
+	// 	u_texture: boid_velocities.front,
 	// })
 }
 
