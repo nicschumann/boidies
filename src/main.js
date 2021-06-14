@@ -11,7 +11,7 @@ let {vec2, vec3, mat3, mat4} = require('gl-matrix');
 let BOID_COUNT = 73;
 let BOIDS = [BOID_COUNT, BOID_COUNT];
 
-
+const DT_MULTIPLIER = 0.001;
 
 function create_normal_colored_boid_geometry ()
 {
@@ -370,6 +370,7 @@ let state = {
 	camera: {
 		T: {
 			pos: vec3.fromValues(0.0, -4.0, -4.0),
+			vel: vec3.fromValues(0.0, 0.0, 0.0),
 			tar: vec3.fromValues(0.0, 0.0, 0.0),
 			up: vec3.fromValues(0.0, 0.0, -1.0)
 		}
@@ -384,6 +385,24 @@ const do_frame = (info) =>
 	let dt = new_time - prev_time;
 	prev_time = new_time;
 	// console.log(`frame time: ${dt}`);
+
+	// update camera state:
+
+	let vel = vec3.create();
+	vec3.copy(vel, state.camera.T.vel);
+	vec3.scale(vel, vel, dt);
+	vec3.add(state.camera.T.pos, state.camera.T.pos, vel);
+	vec3.add(state.camera.T.tar, state.camera.T.tar, vel);
+
+	// slow the camera if all keys are released.
+	if (
+    !keys['w'] && !keys['a'] && !keys['s'] && !keys['d'] &&
+		!keys['ArrowUp'] && !keys['ArrowLeft'] && !keys['ArrowDown'] && !keys['ArrowRight']
+  ) {
+    vec3.scale(state.camera.T.vel, state.camera.T.vel, 0.9);
+    let len = vec3.length(state.camera.T.vel);
+    if (len < 0.001) { state.camera.T.vel = vec3.fromValues(0.0, 0.0, 0.0);}
+  }
 
 	regl.clear({color: [0, 0, 0, 1]});
 
@@ -408,8 +427,6 @@ const do_frame = (info) =>
 		u_color: [1, 0, 0, 1]
 	});
 
-	const DT_MULTIPLIER = 0.001;
-
 	step_boid_velocity({
 		target: boid_velocities.back,
 		u_positions: boid_positions.front,
@@ -427,11 +444,108 @@ const do_frame = (info) =>
 	});
 
 	boid_positions.swap();
-
-	// render_debug_buffer({
-	// 	u_texture: boid_velocities.front,
-	// })
 }
 
 
 regl.frame(do_frame);
+
+
+
+
+
+// Event handling
+
+let keys = {};
+
+window.onkeydown = e => {
+
+	keys[e.key] = true;
+
+	let front = vec3.create();
+  let right = vec3.create();
+  let dir = vec3.fromValues(0.0, 0.0, 0.0);
+  let walkspeed = 0.002;
+
+	vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+	vec3.normalize(front, front);
+
+	vec3.cross(right, front, state.camera.T.up);
+	vec3.normalize(right, right);
+
+	if (keys['ArrowUp'] || keys['w']) {
+    vec3.add(dir, dir, front);
+  }
+
+  if (keys['ArrowDown'] || keys['s']) {
+    vec3.sub(dir, dir, front);
+  }
+
+  if (keys['ArrowLeft'] || keys['a']) {
+    vec3.sub(dir, dir, right);
+  }
+
+  if (keys['ArrowRight'] || keys['d']) {
+    vec3.add(dir, dir, right);
+  }
+
+  console.log(dir);
+  vec3.normalize(dir, dir);
+  vec3.scale(dir, dir, walkspeed);
+  vec3.copy(state.camera.T.vel, dir);
+
+};
+
+window.onkeyup = e => {
+	keys[e.key] = false;
+};
+
+
+
+// orbit controls
+
+let front = vec3.create();
+let right = vec3.create();
+let up = vec3.create();
+let front_prime = vec3.create();
+let right_prime = vec3.create();
+let up_prime = vec3.create();
+
+window.onmousemove = e => {
+	const sensitivity = 0.3;
+  let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
+  let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
+
+
+	vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+  vec3.normalize(front, front);
+
+  vec3.cross(right, front, state.camera.T.up);
+  vec3.normalize(right, right);
+
+  vec3.cross(up, front, right);
+  vec3.normalize(up, up);
+
+  vec3.scale(front_prime, front, Math.cos(theta));
+  vec3.scale(right_prime, right, Math.sin(theta));
+  vec3.add(front_prime, right_prime, front_prime);
+  vec3.copy(front, front_prime);
+  vec3.copy(right, right_prime);
+
+  vec3.add(state.camera.T.tar, state.camera.T.pos, front);
+
+
+  // rotation around the right vector.
+  vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+  vec3.normalize(front, front);
+
+  vec3.cross(right, front, state.camera.T.up);
+  vec3.normalize(right, right);
+
+  vec3.cross(up, front, right);
+  vec3.normalize(up, up);
+
+  vec3.scale(front_prime, front, Math.cos(phi));
+  vec3.scale(up_prime, up, Math.sin(phi));
+  vec3.add(front_prime, front_prime, up_prime);
+  vec3.add(state.camera.T.tar, state.camera.T.pos, front_prime);
+}
