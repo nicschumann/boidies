@@ -1,6 +1,6 @@
 # BOID-ies
 
-I wanted to make a little boids demo for my ML-CSP.
+I wanted to make a little boids demo for my ML-CSP. This repo just shows a GPU-accelerated boids sim with lots of the little guys. `WASD` for fairly janky, scratch-implemented camera movement, `shift` and the mouse to look around jankily. (Nav wasn't really the point of this experiment!)
 
 
 ## What are Boids?

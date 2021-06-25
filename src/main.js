@@ -479,19 +479,19 @@ window.onkeydown = e => {
 	vec3.cross(right, front, state.camera.T.up);
 	vec3.normalize(right, right);
 
-	if (keys['ArrowUp'] || keys['w']) {
+	if (keys['ArrowUp'] || keys['w'] || keys['W']) {
     vec3.add(dir, dir, front);
   }
 
-  if (keys['ArrowDown'] || keys['s']) {
+  if (keys['ArrowDown'] || keys['s'] || keys['S']) {
     vec3.sub(dir, dir, front);
   }
 
-  if (keys['ArrowLeft'] || keys['a']) {
+  if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
     vec3.sub(dir, dir, right);
   }
 
-  if (keys['ArrowRight'] || keys['d']) {
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) {
     vec3.add(dir, dir, right);
   }
 
@@ -518,41 +518,43 @@ let right_prime = vec3.create();
 let up_prime = vec3.create();
 
 window.onmousemove = e => {
-	const sensitivity = 0.45;
-  let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
-  let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
+	if (keys['Shift']) {
+		const sensitivity = 0.45;
+	  let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
+	  let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
 
 
-	vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
-  vec3.normalize(front, front);
+		vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+	  vec3.normalize(front, front);
 
-  vec3.cross(right, front, state.camera.T.up);
-  vec3.normalize(right, right);
+	  vec3.cross(right, front, state.camera.T.up);
+	  vec3.normalize(right, right);
 
-  vec3.cross(up, front, right);
-  vec3.normalize(up, up);
+	  vec3.cross(up, front, right);
+	  vec3.normalize(up, up);
 
-  vec3.scale(front_prime, front, Math.cos(theta));
-  vec3.scale(right_prime, right, Math.sin(theta));
-  vec3.add(front_prime, right_prime, front_prime);
-  vec3.copy(front, front_prime);
-  vec3.copy(right, right_prime);
+	  vec3.scale(front_prime, front, Math.cos(theta));
+	  vec3.scale(right_prime, right, Math.sin(theta));
+	  vec3.add(front_prime, right_prime, front_prime);
+	  vec3.copy(front, front_prime);
+	  vec3.copy(right, right_prime);
 
-  vec3.add(state.camera.T.tar, state.camera.T.pos, front);
+	  vec3.add(state.camera.T.tar, state.camera.T.pos, front);
 
 
-  // rotation around the right vector.
-  vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
-  vec3.normalize(front, front);
+	  // rotation around the right vector.
+	  vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+	  vec3.normalize(front, front);
 
-  vec3.cross(right, front, state.camera.T.up);
-  vec3.normalize(right, right);
+	  vec3.cross(right, front, state.camera.T.up);
+	  vec3.normalize(right, right);
 
-  vec3.cross(up, front, right);
-  vec3.normalize(up, up);
+	  vec3.cross(up, front, right);
+	  vec3.normalize(up, up);
 
-  vec3.scale(front_prime, front, Math.cos(phi));
-  vec3.scale(up_prime, up, Math.sin(phi));
-  vec3.add(front_prime, front_prime, up_prime);
-  vec3.add(state.camera.T.tar, state.camera.T.pos, front_prime);
+	  vec3.scale(front_prime, front, Math.cos(phi));
+	  vec3.scale(up_prime, up, Math.sin(phi));
+	  vec3.add(front_prime, front_prime, up_prime);
+	  vec3.add(state.camera.T.tar, state.camera.T.pos, front_prime);
+	}
 }
