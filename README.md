@@ -1,35 +1,29 @@
-# Esbuild Base
+# BOID-ies
 
-This is a base repository for making simple, single-page javascript applications. It uses `esbuild` as a module bundler, and tries to leave room for expanded tooling in its build process (I tend to customize the asset pipeline on a per-project basis).
+I wanted to make a little boids demo for my ML-CSP.
 
-This base repo was structured after doing two, experimental, single-page website projects in the spring of 2021: an [interactive fluid simulator](https://github.com/nicschumann/fairly-fast-fluids), and [an interactive story](https://github.com/nicschumann/ray-trip). I learned a bit about how to segment the project, and how not to.
 
-## Installation
+## What are Boids?
 
-To get this up and running, first clone the repository into your local computer. Go to the project directory in your terminal, and do:
+What are BOIDSs, conceptually?
 
-```sh
-npm install
-```
+- Boids are little organisms that live in a grid world. They move around according to some rules:
+- They want to move in the same direction as their neighbors.
+    - They want to be close to their neighbors.
+    - They don't want to be too close to any one neighbor.
+- These rules are sufficient to generate complex swarming behavior, similar to birds or schools of fish.
 
-This will install all of the dependencies you need for this project. Once, this is done, do:
+How are BOIDs implemented in math?
 
-```sh
-npm run serve
-```
+- Each boid has a state that consists of its position `p` and velocity `v`. In 2D, these are both 2D vectors.
+- On each timestep, each boid:
+    - Calculates  `p_n` the average position of its neighbors, (where a boids neighborhood is defined as some small radius around it, say $r_{max}$). This is the centroid that it wants to steer towards.
+    - Calculates $v_n$ the average velocity of its neighbors. This is the velocity that it wants to match.
+    - Calculates the average position of boids $p_a$ that it is within a smaller radius of say $r_{min}$. This is the direction it wants to avoid.
+    - Chooses a random direction $d$.
+    - updates it's position and velocity as the following:
+        - `v' = c_c*v + c_p*(p_n - p) + c_v*v_n - c_a * (p_a - p) + c_r * d`
+        - `p' = p + v'`
+- Each of the `c_` coefficients controls how much each rule contributes to the boid's overall behavior.
 
-This will to start a development server, and then visit `localhost:8080` in a browser.
-
-There're two other scripts as well:
-
-```sh
-npm run build
-```
-
-This will compile the assets without a starting a development server. There's also:
-
-```sh
-npm run deploy-gh-pages
-```
-
-This will compile and push the public folder to a gh-pages branch, in case you quickly want to get a test-site up and running. I'd typically add an additional deploy script for a custom environment later.
+*(Note: I said the BOID's state was given by the position and velocity, but the coefficients could also be defined on a per-boid basis. These could then be used as levers to determine how the boid's "personality" works. Some want to be closer to others, some want to be farther away from others, etc.)*

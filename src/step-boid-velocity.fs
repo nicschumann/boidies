@@ -73,7 +73,7 @@ vec3 cohesion(vec3 pos, vec3 vel)
   }
 
 
-  return 0.5 * cohesion + 0.3 * alignment + 0.5 * separation;
+  return 0.5 * cohesion + 0.5 * alignment + 0.5 * separation;
 }
 
 

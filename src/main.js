@@ -8,7 +8,7 @@ let regl = require('regl')({
 let {vec2, vec3, mat3, mat4} = require('gl-matrix');
 
 
-let BOID_COUNT = 73;
+let BOID_COUNT = 256;
 let BOIDS = [BOID_COUNT, BOID_COUNT];
 
 const DT_MULTIPLIER = 0.001;
@@ -22,13 +22,13 @@ function create_normal_colored_boid_geometry ()
 
 	let elements = [];
 
-	if (BOIDS[0] >= 74){
-		console.log(`Warning: attempting to create ${BOIDS[0]}^2 = ${BOIDS[0] * BOIDS[1]} boids.`);
-		console.log(`Warning: max vertices in WebGL is 65k. With normal representation, each boid required 12 vertices.`);
-		console.log(`Warning: Therefore the maximum boid count is 73^2 = 5329 boids.`);
-		console.log(`Warning: Clamping your desired boid count to 73^2.`);
-		BOIDS = [73, 73];
-	}
+	// if (BOIDS[0] >= 74){
+	// 	console.log(`Warning: attempting to create ${BOIDS[0]}^2 = ${BOIDS[0] * BOIDS[1]} boids.`);
+	// 	console.log(`Warning: max vertices in WebGL is 65k. With normal representation, each boid required 12 vertices.`);
+	// 	console.log(`Warning: Therefore the maximum boid count is 73^2 = 5329 boids.`);
+	// 	console.log(`Warning: Clamping your desired boid count to 73^2.`);
+	// 	BOIDS = [73, 73];
+	// }
 
 	// set boid size depending on
 	// how many boids we have.
@@ -166,10 +166,11 @@ function create_vert_colored_boid_geometry ()
 	let indices = [];
 	let elements = [];
 	let colors = [];
+	let normals = [];
 
 	// set boid size depending on
 	// how many boids we have.
-	let unit = 0.0025;
+	let unit = 0.005;
 
 	if (BOIDS[0] <= 64) {
 		unit = 0.006;
@@ -213,6 +214,11 @@ function create_vert_colored_boid_geometry ()
 			indices.push([u,v]);
 			indices.push([u,v]);
 
+			normals.push([0, 0, 1]);
+			normals.push([0, 0, 1]);
+			normals.push([0, 0, 1]);
+			normals.push([0, 0, 1]);
+
 			elements.push([c + 0, c + 1, c + 2])
 			elements.push([c + 0, c + 2, c + 3])
 			elements.push([c + 2, c + 1, c + 3])
@@ -224,7 +230,8 @@ function create_vert_colored_boid_geometry ()
 		positions,
 		colors,
 		indices,
-		elements
+		elements,
+		normals
 	};
 }
 
@@ -281,7 +288,7 @@ let get_m_mvp = (M, V, P) => {
 // 	}
 // `;
 
-let boids = create_normal_colored_boid_geometry();
+let boids = create_vert_colored_boid_geometry();
 
 console.log(`created ${boids.positions.length} vertices.`)
 
@@ -337,7 +344,7 @@ let step_boid_position = regl({
 let draw_simulated_boids = regl({
 	framebuffer: null,
 	vert: require('./render-boid.vs'),
-	frag: require('./render-boid-with-lighting.fs'),
+	frag: require('./render-boid-with-vert-colors.fs'),
 	attributes: {
 		a_offset: boids.positions,
 		a_index: boids.indices,
@@ -511,7 +518,7 @@ let right_prime = vec3.create();
 let up_prime = vec3.create();
 
 window.onmousemove = e => {
-	const sensitivity = 0.3;
+	const sensitivity = 0.45;
   let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
   let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
 
