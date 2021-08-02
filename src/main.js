@@ -517,44 +517,81 @@ let front_prime = vec3.create();
 let right_prime = vec3.create();
 let up_prime = vec3.create();
 
+function rotate(e) {
+	const sensitivity = e.sensitivity;
+	let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
+	let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
+
+
+	vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+	vec3.normalize(front, front);
+
+	vec3.cross(right, front, state.camera.T.up);
+	vec3.normalize(right, right);
+
+	vec3.cross(up, front, right);
+	vec3.normalize(up, up);
+
+	vec3.scale(front_prime, front, Math.cos(theta));
+	vec3.scale(right_prime, right, Math.sin(theta));
+	vec3.add(front_prime, right_prime, front_prime);
+	vec3.copy(front, front_prime);
+	vec3.copy(right, right_prime);
+
+	vec3.add(state.camera.T.tar, state.camera.T.pos, front);
+
+
+	// rotation around the right vector.
+	vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
+	vec3.normalize(front, front);
+
+	vec3.cross(right, front, state.camera.T.up);
+	vec3.normalize(right, right);
+
+	vec3.cross(up, front, right);
+	vec3.normalize(up, up);
+
+	vec3.scale(front_prime, front, Math.cos(phi));
+	vec3.scale(up_prime, up, Math.sin(phi));
+	vec3.add(front_prime, front_prime, up_prime);
+	vec3.add(state.camera.T.tar, state.camera.T.pos, front_prime);
+}
+
 window.onmousemove = e => {
 	if (keys['Shift']) {
-		const sensitivity = 0.45;
-	  let theta = sensitivity * Math.sign(e.movementX) * Math.PI / 180.0;
-	  let phi = sensitivity * Math.sign(e.movementY) * Math.PI / 180.0;
-
-
-		vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
-	  vec3.normalize(front, front);
-
-	  vec3.cross(right, front, state.camera.T.up);
-	  vec3.normalize(right, right);
-
-	  vec3.cross(up, front, right);
-	  vec3.normalize(up, up);
-
-	  vec3.scale(front_prime, front, Math.cos(theta));
-	  vec3.scale(right_prime, right, Math.sin(theta));
-	  vec3.add(front_prime, right_prime, front_prime);
-	  vec3.copy(front, front_prime);
-	  vec3.copy(right, right_prime);
-
-	  vec3.add(state.camera.T.tar, state.camera.T.pos, front);
-
-
-	  // rotation around the right vector.
-	  vec3.sub(front, state.camera.T.tar, state.camera.T.pos);
-	  vec3.normalize(front, front);
-
-	  vec3.cross(right, front, state.camera.T.up);
-	  vec3.normalize(right, right);
-
-	  vec3.cross(up, front, right);
-	  vec3.normalize(up, up);
-
-	  vec3.scale(front_prime, front, Math.cos(phi));
-	  vec3.scale(up_prime, up, Math.sin(phi));
-	  vec3.add(front_prime, front_prime, up_prime);
-	  vec3.add(state.camera.T.tar, state.camera.T.pos, front_prime);
+		rotate({movementX: e.movementX, movementY: e.movementY, sensitivity: 0.45})
 	}
 }
+
+
+let touch_queue = [];
+
+window.ontouchstart = event => {
+	let coordinates = Array.from(event.touches).map(t => [t.pageX, t.pageY]);
+	touch_queue = touch_queue.concat(coordinates);
+};
+
+window.ontouchmove = event => {
+	// console.log('touch move');
+	let coordinates = Array.from(event.touches).map(t => [t.pageX, t.pageY]);
+	touch_queue = touch_queue.concat(coordinates);
+
+	let prev = touch_queue[touch_queue.length - 2];
+	let curr = touch_queue[touch_queue.length - 1];
+
+	if (
+		typeof prev !== 'undefined' &&
+		typeof curr !== 'undefined'
+	) {
+		let movementY = - (curr[1] - prev[1]);
+		let movementX = prev[0] - curr[0];
+
+		rotate({
+			movementX, movementY, sensitivity: 0.2
+		});
+	}
+};
+
+window.ontouchend = event => {
+	touch_queue = [];
+};

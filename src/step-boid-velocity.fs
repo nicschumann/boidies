@@ -102,7 +102,7 @@ vec3 steer_towards_target(vec3 pos, vec3 vel)
     (1.0 - cos_angle) * dot(r_axis, vel) * r_axis;
 
   vec3 adj = rot - vel;
-  float adj_factor = smoothstep(1.5, 2.5, dist_center);
+  float adj_factor = smoothstep(0.5, 2.5, dist_center);
 
   return vel + adj_factor * adj;
 }
