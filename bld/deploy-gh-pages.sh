@@ -9,6 +9,8 @@ echo "!pub/*.woff" >> .gitignore
 echo "!pub/*.eot" >> .gitignore
 echo "!pub/*.ttf" >> .gitignore
 
+echo "nicschumann.co" > pub/CNAME
+
 git add pub .gitignore
 git commit -m "[pre-deploy] adds compiled assets to subtree."
 
