@@ -170,7 +170,10 @@ function create_vert_colored_boid_geometry ()
 
 	// set boid size depending on
 	// how many boids we have.
-	let unit = 0.005;
+
+	// NOTE: consider making this random according to a curve that
+	// selects between a few different cool sizes.
+	let unit = 0.005
 
 	if (BOIDS[0] <= 64) {
 		unit = 0.006;
