@@ -2,7 +2,7 @@ require('./style/main.css');
 import { create_random_nearest_buffer, DoubleFramebuffer } from './buffer.js';
 
 let regl = require('regl')({
-	extensions: ['OES_texture_float', 'OES_texture_float_linear']
+	extensions: ['OES_texture_float', 'OES_texture_half_float']
 });
 
 let {vec2, vec3, mat3, mat4} = require('gl-matrix');

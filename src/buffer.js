@@ -1,13 +1,12 @@
 export function create_nearest_buffer(regl, resolution)
 {
 	let color = regl.texture({
-		data: new Float32Array(resolution * resolution * 4),
 		shape: [resolution, resolution, 4],
 		mag: 'nearest',
 		min: 'nearest',
 		wrapS: 'clamp',
 		wrapT: 'clamp',
-		type: 'float'
+		type: 'half float'
 	});
 
 	return regl.framebuffer({
@@ -20,7 +19,7 @@ export function create_nearest_buffer(regl, resolution)
 
 export function create_random_nearest_buffer(regl, resolution, min=-0.05, max=0.05)
 {
-	let data = new Float32Array(resolution * resolution * 4);
+	let data = [];
 
 	for (var i = 0; i < resolution * resolution * 4; i += 4)
 	{
@@ -48,7 +47,7 @@ export function create_random_nearest_buffer(regl, resolution, min=-0.05, max=0.
 		min: 'nearest',
 		wrapS: 'clamp',
 		wrapT: 'clamp',
-		type: 'float'
+		type: 'half float'
 	});
 
 	return regl.framebuffer({
